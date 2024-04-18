@@ -1,0 +1,25 @@
+openapi: 3.0.1
+paths:
+  /test:
+    summary: test
+info:
+  description: test
+  version: 1.0.0
+  title: test
+components:
+  schemas:
+    maitred_format:
+      type: integer
+      title: Message Format
+      enum:
+        - 1
+        - -1
+        - 0
+      x-enum-varnames:
+        - JSON
+        - Unknown
+        - SIBEC
+      x-enum-descriptions:
+        - "JSON Descriptions"
+        - "Unknown stuff"
+        - "SIBEC Description"

@@ -868,9 +868,6 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
     }
 
     private ModelsMap postProcessModelsMap(ModelsMap objs) {
-        // process enum in models
-        objs = postProcessModelsEnum(objs);
-
         // TODO: migrate almost (all?) everything to the `PythonImports` class.
         TreeSet<String> modelImports = new TreeSet<>();
         TreeSet<String> postponedModelImports = new TreeSet<>();
@@ -1037,7 +1034,9 @@ public abstract class AbstractPythonCodegen extends DefaultCodegen implements Co
             }
         }
 
-        return objs;
+        // postProcessModels calls postProcessModelsEnum internally
+        // This must be the last post-processing to be sure that all enum extensions are considered
+        return postProcessModels(objs);
     }
 
 

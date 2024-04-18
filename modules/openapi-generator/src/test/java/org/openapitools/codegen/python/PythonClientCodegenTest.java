@@ -29,6 +29,7 @@ import org.openapitools.codegen.*;
 import org.openapitools.codegen.languages.PythonClientCodegen;
 import org.openapitools.codegen.languages.features.CXFServerFeatures;
 import static org.openapitools.codegen.TestUtils.assertFileContains;
+import static org.openapitools.codegen.TestUtils.assertFileNotContains;
 import static org.openapitools.codegen.TestUtils.assertFileExists;
 import org.openapitools.codegen.TestUtils;
 import org.openapitools.codegen.java.assertions.JavaFileAssert;
@@ -86,6 +87,49 @@ public class PythonClientCodegenTest {
         assert prop.getNullable();
         assert prop.getEnum().equals(expected);
     }
+
+    @Test(description = "test enum extensions ( x-enum-varnames / x-enum-descriptions )")
+    public void testEnumExtensions() throws IOException {
+        File output = Files.createTempDirectory("test").toFile().getCanonicalFile();
+        output.deleteOnExit();
+
+        final OpenAPI openAPI = TestUtils.parseFlattenSpec("src/test/resources/3_0/issue_16560.yaml");
+        final DefaultGenerator defaultGenerator = new DefaultGenerator();
+        final ClientOptInput clientOptInput = new ClientOptInput();
+        final PythonClientCodegen codegen = new PythonClientCodegen();
+        
+        codegen.setOutputDir(output.getAbsolutePath());
+        clientOptInput.openAPI(openAPI);
+        clientOptInput.config(codegen);
+        defaultGenerator.opts(clientOptInput);
+
+        // Generate Python enum with x-enum-varnames and x-enum-descriptions
+        Map<String, File> files = defaultGenerator.generate().stream()
+                .collect(Collectors.toMap(File::getPath, Function.identity()));
+
+        File enumFile = files.get(Paths.get(output.getAbsolutePath(), "openapi_client", "models", "maitred_format.py").toString());
+
+        assertNotNull(enumFile);
+
+        Schema maitredEnum = openAPI.getComponents().getSchemas().get("maitred_format");
+        List<Number> enumValues = maitredEnum.getEnum();
+        Map<String, Object> enumExtensions = maitredEnum.getExtensions();
+        List<String> enumVarNames = (List<String>) enumExtensions.get("x-enum-varnames");
+        List<String> enumDesciptions = (List<String>) enumExtensions.get("x-enum-descriptions");
+
+        String invalidBehavior = "NUMBER_";
+        String pythonCommentCharSequence = "\"\"\" ";
+        
+        for ( int i=0; i < enumValues.size(); i++){
+            String expected = pythonCommentCharSequence + enumDesciptions.get(i) + " " + pythonCommentCharSequence 
+                + enumVarNames.get(i) + " = " + enumValues.get(i);
+            String unexpected = invalidBehavior + enumValues.get(i);
+
+            assertFileContains(enumFile.toPath(), expected);
+            assertFileNotContains(enumFile.toPath(), unexpected);
+        }
+    }
+     
 
     @Test(description = "test regex patterns")
     public void testRegularExpressionOpenAPISchemaVersion3() {

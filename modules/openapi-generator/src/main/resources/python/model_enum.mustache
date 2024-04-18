@@ -17,6 +17,12 @@ class {{classname}}({{vendorExtensions.x-py-enum-type}}, Enum):
     """
 {{#allowableValues}}
     {{#enumVars}}
+    {{#enumDescription}}
+    
+    """
+    {{.}}
+    """
+    {{/enumDescription}}
     {{{name}}} = {{{value}}}
     {{/enumVars}}
 
